@@ -34,7 +34,7 @@ def valid_integer(text):
 def lex(source):
     # convert input string into a list of tokens
     tokens = []
-    pos = 0
+    i = 0
 
     while i < len(source):
         ch = source[i]
@@ -171,22 +171,95 @@ def parse_shift_expr():
         }
     return left
 
+# : xorExpr  ( ( '&' | '|' ) xorExpr)*
 def parse_bitwise_expr():
-    #xorExpr
-    return
+    left = parse_xor_expr()
+    if peek_type() in ("&" ,"|"):
+        operator = peek_type()
+        consume(operator)
+        right = parse_xor_expr()
 
+        left = {
+            "op": operator,
+            "operand1": left,
+            "operand2": right
+        }
+    return left
+
+# : unaryExpr ( '^' xorExpr)?
 def parse_xor_expr():
     #unaryExpr ('^' xorExpr )
-    return
+    left = parse_unary_expr()
+    if peek_type() == ("^"):
+        consume("^")
+        right = parse_xor_expr()
 
+        return {
+            "op": "^",
+            "operand1": left,
+            "operand2": right
+        }
+    return left
+
+# :'~' unaryExpr
 def parse_unary_expr():
-    #unaryExpr
-    return
+    if peek_type() == "~":
+        consume("~")
+        # | primaryExpr
+        operand = parse_unary_expr()
 
+        return {
+            "op": "~",
+            "operand1": operand,
+            "operand2": None
+        }
+    return parse_primary_expr()
+
+#: INTEGER
+# | '(' expr ');
 def parse_primary_expr():
-    # primaryexpr
-    return
+    token_type = peek_type()
+
+    if token_type == "INTEGER":
+        token = consume("INTEGER")
+        text = token[1]
+
+        # remove underscores
+        cleaned = text.replace("_", "")
+
+        if cleaned.startswith(("0x", "0X")):
+            return int(cleaned, 16)
+
+        return int(cleaned, 10)
+    if token_type == "(":
+        consume("(")
+
+        result = parse_expr()
+
+        consume(")")
+        return result
+
+    if peek() is None:
+        raise SyntaxError("Expected expression found at end of input")
+    raise SyntaxError("expected expression, found " + str(peek()[1]))
 
 def main():
-    return
+    global tokens
+    global pos
+
+    try:
+        source = sys.stdin.read()
+
+        tokens = lex(source)
+        pos = 0
+
+        result = parse_program()
+        print(json.dumps(result, separators=(",", ":")))
+
+    except (SyntaxError, ValueError) as error:
+        print("error: " + str(error), file=sys.stderr)
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
 
