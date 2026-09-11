@@ -1,0 +1,27 @@
+[
+  {
+    "op": "~",
+    "operand1": {
+      "op": ">>",
+      "operand1": {
+        "op": "&",
+        "operand1": {
+          "op": "~",
+          "operand1": 10,
+          "operand2": null
+        },
+        "operand2": 1
+      },
+      "operand2": {
+        "op": "|",
+        "operand1": 16,
+        "operand2": {
+          "op": "&",
+          "operand1": 162,
+          "operand2": 3
+        }
+      }
+    },
+    "operand2": null
+  }
+]

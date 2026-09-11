@@ -1,0 +1,40 @@
+[
+  {
+    "op": "<<",
+    "operand1": 1,
+    "operand2": {
+      "op": "|",
+      "operand1": {
+        "op": "&",
+        "operand1": 2,
+        "operand2": 3
+      },
+      "operand2": 4
+    }
+  },
+  {
+    "op": "<<",
+    "operand1": {
+      "op": "^",
+      "operand1": 2,
+      "operand2": {
+        "op": "^",
+        "operand1": 3,
+        "operand2": 4
+      }
+    },
+    "operand2": {
+      "op": "&",
+      "operand1": {
+        "op": "|",
+        "operand1": {
+          "op": "^",
+          "operand1": 5,
+          "operand2": 6
+        },
+        "operand2": 7
+      },
+      "operand2": 8
+    }
+  }
+]

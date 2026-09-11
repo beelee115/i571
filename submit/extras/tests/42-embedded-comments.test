@@ -1,0 +1,12 @@
+1 // this is a comment
+^ 2 //yet another comment
+| 3 // one more
+& ( // yet another
+
+    // and another
+    
+4 << 5 ^ // another one
+
+~
+~
+6)

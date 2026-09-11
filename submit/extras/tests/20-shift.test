@@ -1,0 +1,6 @@
+//check parenthesized shifts
+//also check multiple adjacent expressions
+
+1 << 2 (1 << 2) << 3 1 << (2 << 3)
+
+1 >> 2 (1 >> 2) >> 3 1 >> (2 >> 3)

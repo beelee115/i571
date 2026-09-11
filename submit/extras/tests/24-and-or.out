@@ -1,0 +1,110 @@
+[
+  {
+    "op": "&",
+    "operand1": {
+      "op": "&",
+      "operand1": 1,
+      "operand2": 2
+    },
+    "operand2": 3
+  },
+  {
+    "op": "|",
+    "operand1": {
+      "op": "&",
+      "operand1": 1,
+      "operand2": 2
+    },
+    "operand2": 3
+  },
+  {
+    "op": "&",
+    "operand1": {
+      "op": "|",
+      "operand1": 1,
+      "operand2": 2
+    },
+    "operand2": 3
+  },
+  {
+    "op": "|",
+    "operand1": {
+      "op": "|",
+      "operand1": 1,
+      "operand2": 2
+    },
+    "operand2": 3
+  },
+  {
+    "op": "&",
+    "operand1": {
+      "op": "&",
+      "operand1": 1,
+      "operand2": 2
+    },
+    "operand2": 3
+  },
+  {
+    "op": "|",
+    "operand1": {
+      "op": "&",
+      "operand1": 1,
+      "operand2": 2
+    },
+    "operand2": 3
+  },
+  {
+    "op": "&",
+    "operand1": {
+      "op": "|",
+      "operand1": 1,
+      "operand2": 2
+    },
+    "operand2": 3
+  },
+  {
+    "op": "|",
+    "operand1": {
+      "op": "|",
+      "operand1": 1,
+      "operand2": 2
+    },
+    "operand2": 3
+  },
+  {
+    "op": "&",
+    "operand1": 1,
+    "operand2": {
+      "op": "&",
+      "operand1": 2,
+      "operand2": 3
+    }
+  },
+  {
+    "op": "&",
+    "operand1": 1,
+    "operand2": {
+      "op": "|",
+      "operand1": 2,
+      "operand2": 3
+    }
+  },
+  {
+    "op": "|",
+    "operand1": 1,
+    "operand2": {
+      "op": "&",
+      "operand1": 2,
+      "operand2": 3
+    }
+  },
+  {
+    "op": "|",
+    "operand1": 1,
+    "operand2": {
+      "op": "|",
+      "operand1": 2,
+      "operand2": 3
+    }
+  }
+]

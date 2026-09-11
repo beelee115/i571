@@ -1,0 +1,20 @@
+[
+  {
+    "op": "~",
+    "operand1": 1,
+    "operand2": null
+  },
+  {
+    "op": "~",
+    "operand1": {
+      "op": "~",
+      "operand1": {
+        "op": "~",
+        "operand1": 2,
+        "operand2": null
+      },
+      "operand2": null
+    },
+    "operand2": null
+  }
+]

@@ -1,0 +1,77 @@
+# Annotated and edited interactive log
+
+# run on empty input (typed ^D to indicate EOF).
+$ ./run.sh
+[]
+
+# run on two expressions (typed ^D to indicate EOF)
+# note output on single line without whitespace
+$ ./run.sh
+0x2a << 0xA00 | 123 & 92  33 ^ 44 ^ (1 << 2)
+[{"op":"<<","operand1":42,"operand2":{"op":"&","operand1":{"op":"|","operand1":2560,"operand2":123},"operand2":92}},{"op":"^","operand1":33,"operand2":{"op":"^","operand1":44,"operand2":{"op":"<<","operand1":1,"operand2":2}}}]
+
+# instead of having run.sh read terminal we pipe input into its stdin
+# using echo.  We also run the output thru jq -S pretty-printer
+$ echo -n '0x33 0xA2 << 2 ^ 3 ^ 4' | ./run.sh | jq -S
+[
+  51,
+  {
+    "op": "<<",
+    "operand1": 162,
+    "operand2": {
+      "op": "^",
+      "operand1": 2,
+      "operand2": {
+        "op": "^",
+        "operand1": 3,
+        "operand2": 4
+      }
+    }
+  }
+]
+
+# bad hex
+$ echo -n '0x' | ./run.sh
+error: expecting 'EOF' but got 'x'
+0x
+ ^
+# bad paren
+$ echo -n '(0x2))' | ./run.sh
+error: expecting 'EOF' but got ')'
+(0x2))
+     ^
+
+# print usage message for do-tests.sh script
+$ ~/cs571/projects/prj1/extras/do-tests.sh
+usage: .../do-tests.sh SHELL_SCRIPT [TEST_FILE_PATH]
+
+# run all tests
+$ ~/cs571/projects/prj1/extras/do-tests.sh run.sh
+04-totally-empty.test ok
+05-empty-with-comment.test ok
+10-ints.test ok
+20-shift.test ok
+24-and-or.test ok
+27-xor.test ok
+28-not.test ok
+30-prec.test ok
+32-paren.test ok
+40-complex.test ok
+42-embedded-comments.test ok
+50-lsh.err ok
+51-rsh.err ok
+53-paren.err ok
+55-bad-op.err ok
+56-multi-op.err ok
+57-complex.err ok
+58-extra-paren.err ok
+59-bad-hex.err ok
+60-first-underscore.err ok
+61-last-underscore.err ok
+62-multi-underscope.err ok
+
+# run only a single test
+$ ~/cs571/projects/prj1/extras/do-tests.sh run.sh \
+     ~/cs571/projects/prj1/extras/tests/20-shift.test
+20-shift.test ok
+09-01T10:49:35|main/prj1-sol $ 

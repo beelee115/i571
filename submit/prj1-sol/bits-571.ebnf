@@ -1,0 +1,36 @@
+// Grammar using ebnf notation
+
+// a program consists of a sequence of zero or more expressions
+program:
+: ( expr program)?
+;
+
+expr
+: shiftExpr
+;
+
+// non-associative expression
+shiftExpr
+: bitwiseExpr ( ( '<<' | '>>' ) bitwiseExpr)?
+;
+
+// & and | are left associative
+bitwiseExpr
+: xorExpr  ( ( '&' & '|' ) xorExpr)*
+;
+
+// ^ is right associative
+xorExpr
+: unaryExpr ( '^' xorExpr)?
+;
+
+// ~ single oerand starts with ~ without parenthesis
+unaryExpr
+:'~' unaryExpr
+| primaryExpr
+;
+
+primaryExpr
+: INTEGER
+| '(' expr ');
+;
