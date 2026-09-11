@@ -16,7 +16,7 @@ shiftExpr
 
 // & and | are left associative
 bitwiseExpr
-: xorExpr  ( ( '&' & '|' ) xorExpr)*
+: xorExpr  ( ( '&' | '|' ) xorExpr)*
 ;
 
 // ^ is right associative
