@@ -89,12 +89,12 @@ def lex(source):
                         i += 1
                     else:
                         break
-                text = source[start:i]
+            text = source[start:i]
 
-                if not valid_integer(text):
-                    raise SyntaxError("invalid integer: " + text)
-                tokens.append(("INTEGER", text))
-                continue
+            if not valid_integer(text):
+                raise SyntaxError("invalid integer: " + text)
+            tokens.append(("INTEGER", text))
+            continue
         # anything else that is invalid
         raise SyntaxError("invalid character : " + repr(ch))
     return tokens
