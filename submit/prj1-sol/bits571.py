@@ -258,7 +258,8 @@ def main():
         pos = 0
 
         result = parse_program()
-        print(json.dumps(result, separators=(",", ":")))
+        # using a print put a new line avoid that
+        sys.stdout.write(json.dumps(result, separators=(",", ":")))
 
     except (SyntaxError, ValueError) as error:
         print("error: " + str(error), file=sys.stderr)

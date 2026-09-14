@@ -1,5 +1,4 @@
 #!/bin/sh
 
-DIR=$(dirname "$0")
-
-exec python3 "$DIR/bits571.py"
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+python3 "$SCRIPT_DIR/bits571.py"
