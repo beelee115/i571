@@ -1,7 +1,7 @@
 // Grammar using ebnf notation
 
 // a program consists of a sequence of zero or more expressions
-program:
+program
 : ( expr program)?
 ;
 
@@ -32,5 +32,5 @@ unaryExpr
 
 primaryExpr
 : INTEGER
-| '(' expr ');
+| '(' expr ')
 ;
