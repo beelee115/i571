@@ -20,16 +20,42 @@ pub fn eval(ast: &ExprNode) -> EvalResult {
 
 fn eval_in_env(ast: &ExprNode, env: &Env<EvalValue>) -> EvalResult {
     match ast {
-	ExprNode::Int { value, .. } => todo!(),
+	// dereference and wrap as EvalValue
+	ExprNode::Int { value, .. } => Ok(EvalValue::Value(*value)),
+	// lambda_expr 
+	// op_fn takes binary operator and returns a rust closure that performs actual arithmetic calc
 	ExprNode::Op2 { op, rand1, rand2, coord } => {
-	    todo!();
+	    let op_fn = op_fn(op, coord)?;
+		// recursively evalute the two operands here - reference to exprnode, reference to evalnode
+		// need to go from an EvalValue to a raw i64 - use val helper
+		let left = eval_in_env(rand1, env)?.val(coord)?;
+		let right = eval_in_env(rand2, env)?.val(coord)?;
+		// look for division by zero
+		if (op == "/" || op == "%") && right == 0 {
+			return Err(EvalError(format!("{}: division by zero", coord)));
+		}
+		Ok(EvalValue::Value(op_fn(left, right)))
 	},
 	ExprNode::If { cond, then, else_, coord } => {
-	    todo!();
+		// should be similar to op2 with using .val(coord)?
+	    if eval_in_env(cond, env)?.val(coord)? != 0 {
+			eval_in_env(then, env)
+		}
+		else {
+			eval_in_env(else_, env)
+		}
 	},
-	ExprNode::Lambda { params, body, .. } => todo!(),
-	ExprNode:: Let { let_kind, defs, expr, .. } => {
-	    todo!();
+	// clone the params because closures own their own fields, eval_in_env borrows
+	ExprNode::Lambda { params, body, .. } => Ok(EvalValue::Closure {
+		//.clone as to not take ownership
+		params: params.clone(),
+		body: (**body).clone(),
+		env: env.clone(),
+	}),
+	ExprNode:: Let { let_kind, defs, expr, .. } => match let_kind {
+	    LetKind::Parallel => eval_let(),
+		LetKind::Sequential => eval_let_star(),
+		LetKind::Recursive => eval_letrec(),
 	}
 	ExprNode::Id { id, coord } => todo!(),
 
@@ -42,8 +68,20 @@ fn eval_in_env(ast: &ExprNode, env: &Env<EvalValue>) -> EvalResult {
 
 /*************************** Helpers for Eval **************************/
 
-//TODO
+// Eval let function helpers defined here
+// for each id = expr definition in defs, evaluate expr in the original environment to some value
+// create new environment with the binding id=value pushed onto it
+fn eval_let() {
 
+}
+
+fn eval_let_star() {
+
+}
+
+fn eval_letrec() {
+
+}
 /**************************** Op2 Helper *******************************/
 
 /// Avoid boilerplace for the different Op2 functions.  Simply call
