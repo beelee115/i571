@@ -121,6 +121,7 @@ fn eval_letrec(defs: &[ExprNode], expr: &ExprNode, env: &Env<EvalValue>) -> Eval
 			env1 = env1.push(id, EvalValue::Undef);
 		}
 	}
+	// make identifiers visible using undef placeholders
 	for d in defs {
 		if let ExprNode::Def {id, expr: def, ..} = d{
 			let v = eval_in_env(def, &env1)?;
@@ -130,7 +131,7 @@ fn eval_letrec(defs: &[ExprNode], expr: &ExprNode, env: &Env<EvalValue>) -> Eval
 	eval_in_env(expr, &env1)
 }
 
-// helper for app -- semantic errors below
+// helper for App -- semantic errors below
 // An unknown binary operator is used. 
 // Expecting an integer value but got something else. 
 // Use of an undefined identifier.
