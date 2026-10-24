@@ -14,7 +14,7 @@ type EvalResult = Result<EvalValue, EvalError>;
 
 pub fn eval(ast: &ExprNode) -> EvalResult {
     //simply delegate to eval_in_env() with a new env.
-    let env = &Env::<EvalValue>::new();
+    let env = Env::<EvalValue>::new();
     eval_in_env(ast, &env)
 }
 
@@ -25,7 +25,7 @@ fn eval_in_env(ast: &ExprNode, env: &Env<EvalValue>) -> EvalResult {
 	// lambda_expr 
 	// op_fn takes binary operator and returns a rust closure that performs actual arithmetic calc
 	ExprNode::Op2 { op, rand1, rand2, coord } => {
-	    let op_fn = op_fn(op, coord)?;
+	    let f = op_fn(op, coord)?;
 		// recursively evalute the two operands here - reference to exprnode, reference to evalnode
 		// need to go from an EvalValue to a raw i64 - use val helper
 		let left = eval_in_env(rand1, env)?.val(coord)?;
@@ -34,7 +34,7 @@ fn eval_in_env(ast: &ExprNode, env: &Env<EvalValue>) -> EvalResult {
 		if (op == "/" || op == "%") && right == 0 {
 			return Err(EvalError(format!("{}: division by zero", coord)));
 		}
-		Ok(EvalValue::Value(op_fn(left, right)))
+		Ok(EvalValue::Value(f(left, right)))
 	},
 	ExprNode::If { cond, then, else_, coord } => {
 		// should be similar to op2 with using .val(coord)?
@@ -53,6 +53,7 @@ fn eval_in_env(ast: &ExprNode, env: &Env<EvalValue>) -> EvalResult {
 		env: env.clone(),
 	}),
 	ExprNode:: Let { let_kind, defs, expr, .. } => {
+		// use the helper functions
 		match let_kind {
 			LetKind::Parallel => eval_let(defs, expr, env),
 			LetKind::Sequential => eval_let_star(defs, expr, env),
