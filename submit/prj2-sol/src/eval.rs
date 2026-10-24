@@ -52,14 +52,30 @@ fn eval_in_env(ast: &ExprNode, env: &Env<EvalValue>) -> EvalResult {
 		body: (**body).clone(),
 		env: env.clone(),
 	}),
-	ExprNode:: Let { let_kind, defs, expr, .. } => match let_kind {
-	    LetKind::Parallel => eval_let(),
-		LetKind::Sequential => eval_let_star(),
-		LetKind::Recursive => eval_letrec(),
-	}
-	ExprNode::Id { id, coord } => todo!(),
-
-	ExprNode::App { name, args, coord } => todo!(),
+	ExprNode:: Let { let_kind, defs, expr, .. } => {
+		match let_kind {
+			LetKind::Parallel => eval_let(defs, expr, env),
+			LetKind::Sequential => eval_let_star(defs, expr, env),
+			LetKind::Recursive => eval_letrec(defs, expr, env),
+		}
+	},
+	// Need to look up env using env.get()
+	ExprNode::Id { id, coord } => {
+		// ok or else transofmrs option into result
+		// we need to return an 'Ok Result' so use that
+		// https://doc.rust-lang.org/std/option/enum.Option.html#method.ok_or_else
+		let v = env.get(id).ok_or_else(|| {
+			EvalError(format!("{}: unbound identifier {}", coord, id))
+		})?;
+		// need lookup fails --> semantic error
+		if let EvalValue::Undef = v {
+			return Err(EvalError(format!("{}: {} was used before it was defined", coord, id)));
+		}
+		// otherwise return Ok Result
+		Ok(v)
+	},
+	// use auxiliary function
+	ExprNode::App { name, args, coord } => eval_app(name, args, coord, env), 
 
 	// we panic below because not handling an AST variant is a bug
 	_ => panic!("eval not defined for ast variant {:?}", ast),
@@ -71,16 +87,83 @@ fn eval_in_env(ast: &ExprNode, env: &Env<EvalValue>) -> EvalResult {
 // Eval let function helpers defined here
 // for each id = expr definition in defs, evaluate expr in the original environment to some value
 // create new environment with the binding id=value pushed onto it
-fn eval_let() {
-
+fn eval_let(defs: &[ExprNode], expr: &ExprNode, env: &Env<EvalValue>) -> EvalResult {
+	let mut env1 = env.clone();
+	// d must be a reference to the def variant of exprnode
+	for d in defs {
+		// based on prj 2 instructions
+		if let ExprNode::Def {id, expr: def, ..} = d {
+			let v = eval_in_env(def, env)?;
+			env1 = env1.push(id, v);
+		}
+	}
+	eval_in_env(expr, &env1)
 }
 
-fn eval_let_star() {
-
+fn eval_let_star(defs: &[ExprNode], expr: &ExprNode, env: &Env<EvalValue>) -> EvalResult{
+	let mut env1 = env.clone();
+	for d in defs {
+		// based on prj 2 instructions
+		if let ExprNode::Def {id, expr: def, ..} = d {
+			let v = eval_in_env(def, &env1)?;
+			env1 = env1.push(id, v);
+		}
+	}
+	eval_in_env(expr, &env1)
 }
 
-fn eval_letrec() {
+fn eval_letrec(defs: &[ExprNode], expr: &ExprNode, env: &Env<EvalValue>) -> EvalResult{
+	let mut env1 = env.clone();
+	for d in defs {
+		// based on prj 2 instructions
+		if let ExprNode::Def {id, ..} = d {
+			env1 = env1.push(id, EvalValue::Undef);
+		}
+	}
+	for d in defs {
+		if let ExprNode::Def {id, expr: def, ..} = d{
+			let v = eval_in_env(def, &env1)?;
+			env1.set(id, v);
+		}
+	}
+	eval_in_env(expr, &env1)
+}
 
+// helper for app -- semantic errors below
+// An unknown binary operator is used. 
+// Expecting an integer value but got something else. 
+// Use of an undefined identifier.
+// Use of an unknown function name. 
+// Use of an identifier as a function name which is not bound to a lambda. 
+// The number of actual parameters provided in a function application do not match the number of formal parameters.
+fn eval_app(name: &str, args: &[ExprNode], coord: &Coord, env: &Env<EvalValue>) -> EvalResult {
+	// look up the function name -> error if function name unknown
+	let f = env.get(name).ok_or_else(|| {EvalError(format!("{}: unknown function {}", coord, name))
+	})?;
+	// closure represents a lambda so must be closure 
+	if let EvalValue::Closure{params, body, env: closure_env} = f{
+		// wrong number of actual parameters
+		if params.len() != args.len() {
+			return Err(EvalError(format!(
+				"{}: {} expects {} arguments and we got {}",
+				coord, name, params.len(), args.len()
+			)));
+		}
+
+		// bind the formal to its actual
+		let mut call_env = closure_env; //start captured env
+		for i in 0..params.len() {
+			// evaluate each actual argument in the caller's env
+			let v = eval_in_env(&args[i], env)?;
+			// add parameter binding to func environment
+			call_env = call_env.push(&params[i], v);
+		}
+
+		// evaluate body in the extended env
+		eval_in_env(&body, &call_env)
+	} else {
+		Err(EvalError(format!("{}: {} is not a function", coord, name)))
+	}
 }
 /**************************** Op2 Helper *******************************/
 
@@ -97,7 +180,7 @@ fn op_fn(op: &str, coord: &Coord) -> Result<BinOpFn, EvalError> {
 	    return Ok(op_fn.1);
 	}
     }
-    Err(EvalError(format!("{}: unknown binary operation {}", op, coord)))
+    Err(EvalError(format!("{}: unknown binary operation {}", coord, op)))
 }
 
 
