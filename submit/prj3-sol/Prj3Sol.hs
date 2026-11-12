@@ -53,8 +53,9 @@ import Prj2LangTypes
 -- toSingletonLists list: Given a list of elements e, return a list containing
 -- of singleton lists [e].
 -- *Restriction*: must use map with a section.
+-- map applies a function specified by first argument to each element of list
 toSingletonLists :: [e] -> [[e]]
-toSingletonLists list = error "TODO"
+toSingletonLists list = map (:[]) list
 
 --------------------------------- listMap -------------------------------
 
@@ -66,7 +67,7 @@ toSingletonLists list = error "TODO"
 -- *Restriction*: cannot use explicit recursion
 -- Hint: use the map function or a list comprehension
 listMap :: (a -> b -> c) -> a -> [b] -> [c]
-listMap f a list = error "TODO"
+listMap f a list = map (f a) list
 
 
 ---------------------------------- append -------------------------------
@@ -75,8 +76,10 @@ listMap f a list = error "TODO"
 
 -- append ls1 ls2: return ls1 ++ ls2
 -- Restriction: must use either foldl or foldr; cannot use ++ or recursion
+-- foldr folds a list from right (:) [] is list so should get (:) ls2 then ls1
+-- foldr :: (a -> b -> b) -> b -> [a] -> b
 append :: [a] -> [a] -> [a]
-append ls1 ls2 = error "TODO"
+append ls1 ls2 = foldr (:) ls2 ls1
   
 ---------------------------------- member -------------------------------
 
@@ -86,8 +89,9 @@ append ls1 ls2 = error "TODO"
 -- *Restriction*: must use foldl, cannot use elem.
 -- Hint: define folding function using a lambda or local let/where definition;
 -- also see recursive definition of member in slides.
+-- folds from the left
 member :: Eq e => e -> [e] -> Bool
-member e list = error "TODO"
+member e list = foldl (\found x -> found || e == x) False list
 
 
 ------------------------------- selectNApart ----------------------------
@@ -97,9 +101,14 @@ member e list = error "TODO"
 -- selectNApart n list: given an Int n and a list of elements e,
 -- return a list containing the elements of the list at index 0,
 -- n, 2n, 3n, 4n, ... for n > 0.
+-- keep first element then skip n-1 elements
+-- page 51 notes with drop fibonacci example
 -- Hint: use drop
 selectNApart :: Int -> [e] -> [e]
-selectNApart n list = error "TODO"
+selectNApart n list = 
+  case list of
+    [] -> []
+    (x:xs) -> x : selectNApart n (drop (n-1) xs)
 
 ------------------------------ sumListsRec ------------------------------
 
@@ -113,7 +122,19 @@ selectNApart n list = error "TODO"
 -- only basic arithmetic operators.  Cannot call any other external
 -- functions.
 sumListsRec :: [[Int]] -> Int -> Int
-sumListsRec listOfLists n = error "TODO"
+sumListsRec listOfLists n = 
+  case listOfLists of
+    [] -> 0
+    (xs:xss) ->
+      if listLength xs `rem` n == 0
+      then listSum xs + sumListsRec xss n
+      else sumListsRec xss n
+  where
+    listLength [] = 0
+    listLength (_:xs) = 1 + listLength xs
+
+    listSum [] = 0
+    listSum (x:xs) = x + listSum xs
                                   
 ------------------------------ sumListsPipe -----------------------------
 
@@ -127,7 +148,11 @@ sumListsRec listOfLists n = error "TODO"
 -- Cannot define any auxiliary functions, but can use `map`, `filter`
 -- `foldl` and `foldr`.
 sumListsPipe :: [[Int]] -> Int -> Int
-sumListsPipe listOfLists n = error "TODO"
+sumListsPipe listOfLists n = 
+  listOfLists
+  & filter (\xs -> length xs `rem` n == 0)
+  & map (foldl (+) 0)
+  & foldl (+) 0
                                   
   
 ----------------------------- evalPrj2Expr ------------------------------
@@ -159,18 +184,67 @@ evalPrj2Expr expr =
             Just v -> v
             Nothing -> error $ "unknown identifier '" ++ id_ ++ "'"
         Op2 { op, rand1, rand2 } ->
-          error "TODO"
+          case (evalEnv rand1 env, evalEnv rand2 env) of
+            (Val v1, Val v2) -> Val (opFn op v1 v2)
+            _ -> error "expected integer operands"
         If { cond, then_, else_ } -> 
-          error "TODO"
+          case evalEnv cond env of
+            Val 0 -> evalEnv else_ env
+            Val _ -> evalEnv then_ env
+            _ -> error "expected integer condition"
         lambda@Lambda {} -> 
-          error "TODO"  
+          Closure env lambda  
         Let { letKind, defs, expr } ->
-          error "TODO"  
+          case letKind of
+            Parallel -> evalEnv expr (parallelDefs defs env env)
+            Sequential -> evalEnv expr (sequentialDefs defs env)
+            Recursive ->
+              let recursiveEnv = recursiveDefs defs env recursiveEnv
+              in evalEnv expr recursiveEnv  
         App { name, args } ->
-          error "TODO"  
+          case lookup name env of
+            Just (Closure closureEnv (Lambda {params, body})) ->
+              evalEnv body (bindArgs params args closureEnv env)
+            _ -> error "expected a closure"  
         _ -> error $ "unhandled expr " -- ++ (show expr)
 
     -- TODO: add more aux fns
+    -- Parallel def all evaulate in og env
+    parallelDefs defs originalEnv extendedEnv = 
+      case defs of
+        [] -> extendedEnv
+        (Def {id_, expr}:rest) ->
+          parallelDefs rest originalEnv
+          ((id_, evalEnv expr originalEnv) : extendedEnv)
+        _ -> error "expected a definition" 
+    -- SequentialDefs evaluate in the env built so far
+    sequentialDefs :: [Expr] -> Env -> Env
+    sequentialDefs defs env =
+      case defs of
+        [] -> env
+        (Def { id_, expr}:rest) ->
+          sequentialDefs rest ((id_, evalEnv expr env) : env)
+        _ -> error  "expected a defintion"
+
+    -- Recursive def to see the final environment
+    recursiveDefs :: [Expr] -> Env -> Env -> Env
+    recursiveDefs defs env recursiveEnv =
+      case defs of
+        [] -> env
+        (Def {id_, expr}:rest) ->
+          (id_, evalEnv expr recursiveEnv) : recursiveDefs rest env recursiveEnv
+        _ -> error "expected a definition"
+
+    -- parameters are added to captured closure env
+    bindArgs :: [String] -> [Expr] -> Env -> Env -> Env
+    bindArgs params args closureEnv callerEnv =
+      case (params, args) of
+        ([], []) -> closureEnv
+        (param:moreParams, arg:moreArgs) ->
+          (param, evalEnv arg callerEnv) :
+            bindArgs moreParams moreArgs closureEnv callerEnv
+        _ -> error "incorrect number of arguments"
+
     
     opFn op =
       case lookup op opFuncs of

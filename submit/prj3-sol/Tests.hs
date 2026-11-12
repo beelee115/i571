@@ -111,14 +111,14 @@ testEvalPrj2Expr = do
 --   Run:   run these tests when no tests are marked Only.
 --   Skip:  skip these tests.
 allTests = [
-    (Skip testToSingletonLists),
-    (Skip testListMap),
-    (Skip testAppend),
-    (Skip testMember),
-    (Skip testSelectNApart),
-    (Skip testSumListsRec),
-    (Skip testSumListsPipe),
-    (Skip testEvalPrj2Expr)
+    (Run testToSingletonLists),
+    (Run testListMap),
+    (Run testAppend),
+    (Run testMember),
+    (Run testSelectNApart),
+    (Run testSumListsRec),
+    (Run testSumListsPipe),
+    (Run testEvalPrj2Expr)
   ]
 
 
